@@ -12,6 +12,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.rpc.ServiceException;
 
@@ -19,7 +20,9 @@ import org.apache.commons.lang.xwork.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.hannonhill.smt.ChooserType;
 import com.hannonhill.smt.ContentTypeInformation;
+import com.hannonhill.smt.DataDefinitionField;
 import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.smt.service.WebServices;
 import com.hannonhill.smt.util.PathUtil;
@@ -179,14 +182,43 @@ public class ProjectPropertiesAction extends BaseAction
         // Convert each ContentType to the ContentTypeInformation object and add to the map in the
         // projectInformation
         for (ContentType contentType : contentTypes)
+        {
+            // Only content types with data definitions count
+            if (contentType.getDataDefinitionId() == null)
+                continue;
+
             try
             {
-                projectInformation.getContentTypes().put(contentType.getPath(), new ContentTypeInformation(contentType, projectInformation));
+                ContentTypeInformation ctInfo = new ContentTypeInformation(contentType, projectInformation);
+                Map<String, DataDefinitionField> ddFields = ctInfo.getDataDefinitionFields();
+
+                // Only data definitions with "aside", "article" and "header" multiple block chooser fields
+                if (isMultipleBlockChooser(ddFields, "aside") && isMultipleBlockChooser(ddFields, "article")
+                        && isMultipleBlockChooser(ddFields, "header"))
+                    projectInformation.getContentTypes().put(contentType.getPath(), ctInfo);
             }
             catch (Exception e)
             {
                 addActionError(e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Returns true if given <code>ddFields</code> have a field with given <code>fieldIdentifier</code> and
+     * that field is a multiple block chooser.
+     * 
+     * @param ddFields
+     * @param fieldIdentifier
+     * @return
+     */
+    private boolean isMultipleBlockChooser(Map<String, DataDefinitionField> ddFields, String fieldIdentifier)
+    {
+        DataDefinitionField ddField = ddFields.get(fieldIdentifier);
+        if (ddField == null)
+            return false;
+
+        return ddField.isMultiple() && ddField.getChooserType() == ChooserType.BLOCK;
     }
 
     /**
@@ -231,13 +263,9 @@ public class ProjectPropertiesAction extends BaseAction
     }
 
     /**
-     * Verifies that:
-     * - the URL is a valid URL
-     * - it is possible to connect
-     * - the username and password authenticate
-     * - the user can read site objects
-     * - the site with given site name exists
-     * - the site can be actually read
+     * Verifies that: - the URL is a valid URL - it is possible to connect - the username and password
+     * authenticate - the user can read site objects - the site with given site name exists - the site can be
+     * actually read
      */
     private void verifyConnectivity()
     {

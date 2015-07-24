@@ -137,7 +137,42 @@ public class WebServicesUtil
                 assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
             }
 
+        Map<String, String> nameToPathMap = new HashMap<String, String>();
+        for (String path : projectInformation.getExistingCascadeXhtmlBlocks().keySet())
+        {
+            String name = PathUtil.getNameFromPath(path);
+            nameToPathMap.put(name, path);
+        }
+
+        populateBlockChoosers("header", "//div[@id=\"header-image\"]", fileContents, nameToPathMap, rootGroup, projectInformation);
+        populateBlockChoosers("article", "//div[@id=\"article\"]", fileContents, nameToPathMap, rootGroup, projectInformation);
+        populateBlockChoosers("aside", "//div[@class=\"aside\"]", fileContents, nameToPathMap, rootGroup, projectInformation);
+
         return convertToStructuredData(rootGroup);
+    }
+
+    /**
+     * Populates a multiple block chooser field with given <code>identifier</code> with blocks whose names
+     * come from a ContentID tags inside of an element that matches given <code>xPathExpression</code> in
+     * given <code>fileContents</code>.
+     * 
+     * @param identifier
+     * @param xPathExpression
+     * @param fileContents
+     * @param nameToPathMap
+     * @param rootGroup
+     * @param projectInformation
+     * @throws Exception
+     */
+    private static void populateBlockChoosers(String identifier, String xPathExpression, String fileContents, Map<String, String> nameToPathMap,
+            StructuredDataGroup rootGroup, ProjectInformation projectInformation) throws Exception
+    {
+        String xPathToUse = xPathExpression + "//ControlWidget[ControlType='Image']/ContentID/text() | " + xPathExpression
+                + "//ControlWidget[ControlType='ContentBlock']/ContentID/text()";
+        DataDefinitionField field = new DataDefinitionField(identifier, identifier, ChooserType.BLOCK, true, false);
+        List<String> blockNames = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
+        for (String blockName : blockNames)
+            assignAppropriateFieldValue(rootGroup, field, nameToPathMap.get(blockName), projectInformation);
     }
 
     /**
@@ -325,6 +360,30 @@ public class WebServicesUtil
                     List<StructuredDataNode> fileNodes = new ArrayList<StructuredDataNode>();
                     fileNodes.add(fileNode);
                     currentNode.getContentFields().put(identifier, fileNodes);
+                }
+            }
+        }
+        else if (field.getChooserType() == ChooserType.BLOCK)
+        {
+            String path = fieldValue;
+            if (path != null && !path.trim().equals(""))
+            {
+                path = path.trim();
+                if (WebServices.getAssetId(path, projectInformation) != null)
+                {
+                    StructuredDataNode blockNode = new StructuredDataNode();
+                    blockNode.setIdentifier(identifier);
+                    blockNode.setBlockPath(path);
+                    blockNode.setType(StructuredDataType.asset);
+                    blockNode.setAssetType(StructuredDataAssetType.fromString("block"));
+                    List<StructuredDataNode> blockNodes = currentNode.getContentFields().get(identifier);
+                    if (blockNodes == null)
+                    {
+                        blockNodes = new ArrayList<StructuredDataNode>();
+                        currentNode.getContentFields().put(identifier, blockNodes);
+                    }
+
+                    blockNodes.add(blockNode);
                 }
             }
         }

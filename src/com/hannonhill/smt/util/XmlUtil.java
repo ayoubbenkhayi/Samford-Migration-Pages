@@ -6,6 +6,7 @@
 package com.hannonhill.smt.util;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -13,6 +14,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.jdom.Attribute;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.Text;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
@@ -129,6 +131,47 @@ public class XmlUtil
 
         // Otherwise, let the XMLOutputter handle outputting (it can't handle Attributes or Strings)
         return new XMLOutputter().outputString(result);
+    }
+
+    /**
+     * Evaluates given xPathExpression on given xmlContents and returns a list of results converted to Strings
+     * 
+     * @param xmlContents
+     * @param xPathExpression
+     * @return
+     * @throws Exception
+     */
+    public static List<String> evaluateXPathExpressionAsList(String xmlContents, String xPathExpression) throws Exception
+    {
+        // JTidy adds a namespace, which causes many issues with xpath
+        xmlContents = xmlContents.replaceAll("xmlns=\"http://www.w3.org/1999/xhtml\"", "");
+
+        SAXBuilder builder = new SAXBuilder();
+        InputSource inputSource = new InputSource(new ByteArrayInputStream(xmlContents.getBytes("UTF-8")));
+        Document doc = builder.build(inputSource);
+
+        List<String> stringResult = new ArrayList<String>();
+        List<?> result = XPath.selectNodes(doc, xPathExpression);
+
+        if (result.size() == 0)
+            return stringResult;
+
+        for (Object obj : result)
+        {
+            if (obj instanceof String)
+                stringResult.add((String) obj);
+
+            else if (obj instanceof Attribute)
+                stringResult.add(((Attribute) obj).getValue());
+
+            else if (obj instanceof Text)
+                stringResult.add(((Text) obj).getText());
+
+            else if (obj instanceof Element)
+                stringResult.add(new XMLOutputter().outputString((Element) obj));
+        }
+
+        return stringResult;
     }
 
     /**

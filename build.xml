@@ -1,6 +1,6 @@
-<project name="UMT">
+<project name="SamfordMigrationPages">
 
-    <description>Universal Migration Tool</description>
+    <description>Samford Migration Pages</description>
 
     <property name="src.dir" value="src"/>
 	<property name="dist.dir" value="dist"/>
