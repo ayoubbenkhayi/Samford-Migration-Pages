@@ -167,12 +167,18 @@ public class WebServicesUtil
     private static void populateBlockChoosers(String identifier, String xPathExpression, String fileContents, Map<String, String> nameToPathMap,
             StructuredDataGroup rootGroup, ProjectInformation projectInformation) throws Exception
     {
+        DataDefinitionField field = new DataDefinitionField(identifier, identifier, ChooserType.BLOCK, true, false);
+
         String xPathToUse = xPathExpression + "//ControlWidget[ControlType='Image']/ContentID/text() | " + xPathExpression
                 + "//ControlWidget[ControlType='ContentBlock']/ContentID/text()";
-        DataDefinitionField field = new DataDefinitionField(identifier, identifier, ChooserType.BLOCK, true, false);
         List<String> blockNames = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
         for (String blockName : blockNames)
             assignAppropriateFieldValue(rootGroup, field, nameToPathMap.get(blockName), projectInformation);
+
+        xPathToUse = xPathExpression + "//ControlWidget[ControlType='XmlDataTransform']/Template/text()";
+        List<String> xsltPaths = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
+        for (String xsltPath : xsltPaths)
+            assignAppropriateFieldValue(rootGroup, field, projectInformation.getTemplateToBlockMapping().get(xsltPath), projectInformation);
     }
 
     /**
@@ -369,22 +375,19 @@ public class WebServicesUtil
             if (path != null && !path.trim().equals(""))
             {
                 path = path.trim();
-                if (WebServices.getAssetId(path, projectInformation) != null)
+                StructuredDataNode blockNode = new StructuredDataNode();
+                blockNode.setIdentifier(identifier);
+                blockNode.setBlockPath(path);
+                blockNode.setType(StructuredDataType.asset);
+                blockNode.setAssetType(StructuredDataAssetType.fromString("block"));
+                List<StructuredDataNode> blockNodes = currentNode.getContentFields().get(identifier);
+                if (blockNodes == null)
                 {
-                    StructuredDataNode blockNode = new StructuredDataNode();
-                    blockNode.setIdentifier(identifier);
-                    blockNode.setBlockPath(path);
-                    blockNode.setType(StructuredDataType.asset);
-                    blockNode.setAssetType(StructuredDataAssetType.fromString("block"));
-                    List<StructuredDataNode> blockNodes = currentNode.getContentFields().get(identifier);
-                    if (blockNodes == null)
-                    {
-                        blockNodes = new ArrayList<StructuredDataNode>();
-                        currentNode.getContentFields().put(identifier, blockNodes);
-                    }
-
-                    blockNodes.add(blockNode);
+                    blockNodes = new ArrayList<StructuredDataNode>();
+                    currentNode.getContentFields().put(identifier, blockNodes);
                 }
+
+                blockNodes.add(blockNode);
             }
         }
     }

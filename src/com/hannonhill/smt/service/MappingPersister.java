@@ -8,7 +8,9 @@ package com.hannonhill.smt.service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.commons.lang.xwork.StringEscapeUtils;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
@@ -40,6 +42,10 @@ public class MappingPersister
     private static final String STATIC_VALUE_MAPPINGS_TAG = "staticValueMappings";
     private static final String STATIC_VALUE_MAPPING_TAG = "staticValueMapping";
     private static final String STATIC_VALUE_TAG = "staticValue";
+    private static final String TEMPLATE_TO_BLOCK_MAPPINGS_TAG = "templateToBlockMappings";
+    private static final String TEMPLATE_TO_BLOCK_MAPPING_TAG = "templateToBlockMapping";
+    private static final String TEMPLATE_TAG = "template";
+    private static final String BLOCK_TAG = "block";
     private static final String ROOT_LEVEL_FOLDERS_TAG = "rootLevelFolders";
     private static final String ROOT_LEVEL_FOLDER_TAG = "rootLevelFolder";
     private static final String FOLDER_TAG = "folder";
@@ -73,6 +79,11 @@ public class MappingPersister
             persistStaticValueMapping(content, projectInformation.getStaticValueMapping(), field);
         content.append("</" + STATIC_VALUE_MAPPINGS_TAG + ">");
 
+        content.append("<" + TEMPLATE_TO_BLOCK_MAPPINGS_TAG + ">");
+        for (Entry<String, String> mappingEntry : projectInformation.getTemplateToBlockMapping().entrySet())
+            persistTemplateToBlockMapping(content, mappingEntry);
+        content.append("</" + TEMPLATE_TO_BLOCK_MAPPINGS_TAG + ">");
+
         content.append("<" + ROOT_LEVEL_FOLDERS_TAG + ">");
         for (String folder : projectInformation.getExternalRootLevelFolderAssignemnts().keySet())
             persistRootLevelFolder(content, projectInformation.getExternalRootLevelFolderAssignemnts().get(folder));
@@ -94,8 +105,8 @@ public class MappingPersister
 
     /**
      * Loads the mappings from the file system and assigns them to the projectInformation object. If there is
-     * a problem with loading the saved mappings,
-     * nothing significant will happen - no mappings will be loaded and the stack trace will be in the output.
+     * a problem with loading the saved mappings, nothing significant will happen - no mappings will be loaded
+     * and the stack trace will be in the output.
      * 
      * @param projectInformation
      */
@@ -135,6 +146,8 @@ public class MappingPersister
                     loadFieldMappings(node, projectInformation.getFieldMapping(), contentType);
                 else if (node.getNodeName().equals(STATIC_VALUE_MAPPINGS_TAG))
                     loadStaticValueMappings(node, projectInformation.getStaticValueMapping(), contentType);
+                else if (node.getNodeName().equals(TEMPLATE_TO_BLOCK_MAPPINGS_TAG))
+                    loadTemplateToBlockMappings(node, projectInformation.getTemplateToBlockMapping());
                 else if (node.getNodeName().equals(PAGE_EXTENSIONS_TAG))
                     projectInformation.setPageExtensions(node.getTextContent());
                 else if (node.getNodeName().equals(BLOCK_EXTENSIONS_TAG))
@@ -193,8 +206,7 @@ public class MappingPersister
 
     /**
      * Assigns the static value mappings from each &lt;fieldMapping&gt; child to the mappings. Finds the field
-     * object by its identifier in the content type.
-     * If the field object could not be found, it gets ignored.
+     * object by its identifier in the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingsNode
      * @param mappings
@@ -212,8 +224,7 @@ public class MappingPersister
 
     /**
      * Assigns the field mappings from given node to the mappings. Finds the field object by its identifier in
-     * the content type.
-     * If the field object could not be found, it gets ignored.
+     * the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingNode
      * @param mappings
@@ -251,8 +262,8 @@ public class MappingPersister
 
     /**
      * Assigns the static value mappings from each &lt;staticValueMapping&gt; child to the mappings. Finds the
-     * field object by its identifier in the content type.
-     * If the field object could not be found, it gets ignored.
+     * field object by its identifier in the content type. If the field object could not be found, it gets
+     * ignored.
      * 
      * @param mappingsNode
      * @param mappings
@@ -268,10 +279,19 @@ public class MappingPersister
         }
     }
 
+    private static void loadTemplateToBlockMappings(Node mappingsNode, Map<String, String> mappings)
+    {
+        for (int i = 0; i < mappingsNode.getChildNodes().getLength(); i++)
+        {
+            Node node = mappingsNode.getChildNodes().item(i);
+            if (node.getNodeName().equals(TEMPLATE_TO_BLOCK_MAPPING_TAG))
+                loadTemplateToBlockMapping(node, mappings);
+        }
+    }
+
     /**
      * Assigns the static value mappings from given node to the mappings. Finds the field object by its
-     * identifier in the content type.
-     * If the field object could not be found, it gets ignored.
+     * identifier in the content type. If the field object could not be found, it gets ignored.
      * 
      * @param mappingNode
      * @param mappings
@@ -307,11 +327,30 @@ public class MappingPersister
         mappings.put(field, staticValue);
     }
 
+    private static void loadTemplateToBlockMapping(Node mappingNode, Map<String, String> mappings)
+    {
+        String template = null;
+        String block = null;
+        for (int i = 0; i < mappingNode.getChildNodes().getLength(); i++)
+        {
+            Node node = mappingNode.getChildNodes().item(i);
+            String nodeName = node.getNodeName();
+            if (nodeName.equals(TEMPLATE_TAG))
+                template = node.getTextContent();
+            else if (nodeName.equals(BLOCK_TAG))
+                block = node.getTextContent();
+        }
+
+        if (template == null || block == null)
+            return;
+
+        mappings.put(template, block);
+    }
+
     /**
      * If cascadeMetadataField is not null, returns a metadata field from the content type that matches the
-     * cascadeMetadataField identifier.
-     * If not, returns a data definition field from the content type that matches the
-     * cascadeDataDefinitionField identifier.
+     * cascadeMetadataField identifier. If not, returns a data definition field from the content type that
+     * matches the cascadeDataDefinitionField identifier.
      * 
      * @param contentType
      * @param cascadeMetadataField
@@ -388,10 +427,21 @@ public class MappingPersister
         content.append("</" + STATIC_VALUE_MAPPING_TAG + ">");
     }
 
+    private static void persistTemplateToBlockMapping(StringBuilder content, Entry<String, String> mappingEntry)
+    {
+        content.append("<" + TEMPLATE_TO_BLOCK_MAPPING_TAG + ">");
+        content.append("<" + TEMPLATE_TAG + ">");
+        content.append(StringEscapeUtils.escapeXml(mappingEntry.getKey()));
+        content.append("</" + TEMPLATE_TAG + ">");
+        content.append("<" + BLOCK_TAG + ">");
+        content.append(StringEscapeUtils.escapeXml(mappingEntry.getValue()));
+        content.append("</" + BLOCK_TAG + ">");
+        content.append("</" + TEMPLATE_TO_BLOCK_MAPPING_TAG + ">");
+    }
+
     /**
      * Adds the &lt;cascadeMetadataField&gt; tag or &lt;cascadeDataDefinitionField&gt; tag depending on the
-     * field type to the content
-     * with the identifier of the field
+     * field type to the content with the identifier of the field
      * 
      * @param content
      * @param cascadeField

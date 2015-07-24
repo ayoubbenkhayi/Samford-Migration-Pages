@@ -82,6 +82,17 @@
 								</table>
 							</div>
 						</div>
+            <h4>Template to block mappings</h4>
+            <div id="templateMappings">
+              <s:iterator value="templateToBlockMapping.entrySet()">
+                <div>
+                  Template path: <input name="templatePaths" type="text" value="<s:property value="key"/>"/>
+                  Block path: <input name="blockPaths" type="text" value="<s:property value="value"/>"/>
+                  <button class="btn" type="button" onclick="$(this).parents('div:first').remove()">Remove</button>
+                </div>
+              </s:iterator>
+            </div>
+            <p><button class="btn" type="button" onclick="addTemplateMapping()">Add new mapping</button></p>
 						<button class="btn pull-left" onclick="window.location='/AssignContentType';return false;">Previous</button>
 					 	<button type="submit" name="submitButton" class="btn btn-primary pull-right">Save and Next</button>
 					</form>
@@ -112,6 +123,11 @@
 					addMappingByName(null, "<s:property value="value" escapeJavaScript="true" escape="false"/>", "<s:property value="key.identifier"/>", "<s:property value="key.class.name"/>");
 				</s:iterator>
 			});
+			
+			function addTemplateMapping()
+			{
+			  $('#templateMappings').append('<div>Template path: <input name="templatePaths" type="text" value=""/> Block path: <input name="blockPaths" type="text" value=""/> <button class="btn" type="button" onclick="$(this).parents(\'div:first\').remove()">Remove</button></div>');
+			}
 
 			function addMappingFromForm()
 			{

@@ -42,6 +42,7 @@ public class ProjectInformation
                                                                                         // from a Cascade
                                                                                         // field to its static
                                                                                         // value it should get
+    private final Map<String, String> templateToBlockMapping = new HashMap<String, String>();
 
     // analyzed information
     private Map<String, ContentTypeInformation> contentTypes; // content type path and the actual content type
@@ -384,6 +385,14 @@ public class ProjectInformation
     public Map<Field, String> getStaticValueMapping()
     {
         return staticValueMapping;
+    }
+
+    /**
+     * @return Returns the templateToBlockMapping.
+     */
+    public Map<String, String> getTemplateToBlockMapping()
+    {
+        return templateToBlockMapping;
     }
 
     /**

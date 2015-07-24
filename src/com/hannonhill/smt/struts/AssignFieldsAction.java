@@ -6,8 +6,10 @@
 package com.hannonhill.smt.struts;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.hannonhill.smt.ContentTypeInformation;
 import com.hannonhill.smt.Field;
@@ -39,6 +41,11 @@ public class AssignFieldsAction extends BaseAction
     private String[] selectedCascadeMetadataFields = new String[0];
     private String[] selectedCascadeDataDefinitionFields = new String[0];
 
+    // Template to block mappings
+    private Map<String, String> templateToBlockMapping = new HashMap<String, String>();
+    private String[] templatePaths = new String[0];
+    private String[] blockPaths = new String[0];
+
     @Override
     public String execute() throws Exception
     {
@@ -60,6 +67,7 @@ public class AssignFieldsAction extends BaseAction
         // Clear out the old information
         projectInformation.getFieldMapping().clear();
         projectInformation.getStaticValueMapping().clear();
+        projectInformation.getTemplateToBlockMapping().clear();
 
         String contentTypePath = projectInformation.getContentTypePath();
         ContentTypeInformation contentType = projectInformation.getContentTypes().get(contentTypePath);
@@ -69,6 +77,8 @@ public class AssignFieldsAction extends BaseAction
         {
             for (int i = 0; i < selectedXPaths.length; i++)
                 addFieldMapping(i, contentType, projectInformation);
+            for (int i = 0; i < templatePaths.length; i++)
+                addTemplateToBlockMapping(i, projectInformation);
             MappingPersister.persistMappings(projectInformation);
         }
         catch (Exception e)
@@ -93,6 +103,8 @@ public class AssignFieldsAction extends BaseAction
         ContentTypeInformation contentType = projectInformation.getContentTypes().get(contentTypePath);
         cascadeMetadataFields.addAll(contentType.getMetadataFields().values());
         cascadeDataDefinitionFields.addAll(contentType.getDataDefinitionFields().values());
+        for (Entry<String, String> mappingEntry : projectInformation.getTemplateToBlockMapping().entrySet())
+            templateToBlockMapping.put(mappingEntry.getKey(), mappingEntry.getValue());
 
         return INPUT;
     }
@@ -133,6 +145,14 @@ public class AssignFieldsAction extends BaseAction
             projectInformation.getFieldMapping().put(selectedXPath, field);
         else
             projectInformation.getStaticValueMapping().put(field, staticValue);
+    }
+
+    private void addTemplateToBlockMapping(int i, ProjectInformation projectInformation) throws Exception
+    {
+        String templatePath = templatePaths[i];
+        String blockPath = blockPaths[i];
+
+        projectInformation.getTemplateToBlockMapping().put(templatePath, blockPath);
     }
 
     /**
@@ -230,4 +250,53 @@ public class AssignFieldsAction extends BaseAction
     {
         this.selectedXPaths = selectedXPaths;
     }
+
+    /**
+     * @return Returns the templatePaths.
+     */
+    public String[] getTemplatePaths()
+    {
+        return templatePaths;
+    }
+
+    /**
+     * @param templatePaths the templatePaths to set
+     */
+    public void setTemplatePaths(String[] templatePaths)
+    {
+        this.templatePaths = templatePaths;
+    }
+
+    /**
+     * @return Returns the blockPaths.
+     */
+    public String[] getBlockPaths()
+    {
+        return blockPaths;
+    }
+
+    /**
+     * @param blockPaths the blockPaths to set
+     */
+    public void setBlockPaths(String[] blockPaths)
+    {
+        this.blockPaths = blockPaths;
+    }
+
+    /**
+     * @return Returns the templateToBlockMapping.
+     */
+    public Map<String, String> getTemplateToBlockMapping()
+    {
+        return templateToBlockMapping;
+    }
+
+    /**
+     * @param templateToBlockMapping the templateToBlockMapping to set
+     */
+    public void setTemplateToBlockMapping(Map<String, String> templateToBlockMapping)
+    {
+        this.templateToBlockMapping = templateToBlockMapping;
+    }
+
 }
