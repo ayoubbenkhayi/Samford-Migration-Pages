@@ -57,6 +57,9 @@ public class ProjectInformation
     private final Map<String, String> existingCascadeFiles; // Used for Luminis file import and link checking
     private final Map<String, String> existingCascadeXhtmlBlocks;// performance reasons - file paths are
                                                                  // checked first
+    private final Map<String, String> blockIdToPathMap; // Maps from block's dynamic metadata field "id" to
+                                                        // the block's path
+
     // to avoid having to check if file exists each time a new
     // file is brought in
     private final Map<String, String> existingCascadePages; // Also used for link checking performance reasons
@@ -90,6 +93,7 @@ public class ProjectInformation
         externalRootLevelFolderAssignemnts = new HashMap<String, ExternalRootLevelFolderAssignment>();
         existingCascadeFiles = new HashMap<String, String>();
         existingCascadeXhtmlBlocks = new HashMap<String, String>();
+        blockIdToPathMap = new HashMap<String, String>();
         existingCascadePages = new HashMap<String, String>();
         pageExtensions = new HashSet<String>();
         blockExtensions = new HashSet<String>();
@@ -447,6 +451,14 @@ public class ProjectInformation
     {
         blockExtensions.clear();
         blockExtensions.addAll(convertExtensionsToSet(extensions));
+    }
+
+    /**
+     * @return Returns the blockIdToPathMap.
+     */
+    public Map<String, String> getBlockIdToPathMap()
+    {
+        return blockIdToPathMap;
     }
 
     /**

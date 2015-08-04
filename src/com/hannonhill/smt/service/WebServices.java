@@ -28,8 +28,10 @@ import com.hannonhill.www.ws.ns.AssetOperationService.ContentType;
 import com.hannonhill.www.ws.ns.AssetOperationService.ContentTypeContainer;
 import com.hannonhill.www.ws.ns.AssetOperationService.CreateResult;
 import com.hannonhill.www.ws.ns.AssetOperationService.DataDefinition;
+import com.hannonhill.www.ws.ns.AssetOperationService.DynamicMetadataField;
 import com.hannonhill.www.ws.ns.AssetOperationService.DynamicMetadataFieldDefinition;
 import com.hannonhill.www.ws.ns.AssetOperationService.EntityTypeString;
+import com.hannonhill.www.ws.ns.AssetOperationService.FieldValue;
 import com.hannonhill.www.ws.ns.AssetOperationService.File;
 import com.hannonhill.www.ws.ns.AssetOperationService.Folder;
 import com.hannonhill.www.ws.ns.AssetOperationService.Identifier;
@@ -655,13 +657,38 @@ public class WebServices
             if (child.getType().equals(EntityTypeString.file))
                 projectInformation.getExistingCascadeFiles().put(child.getPath().getPath().toLowerCase(), child.getId());
             else if (child.getType().equals(EntityTypeString.block_XHTML_DATADEFINITION))
-                projectInformation.getExistingCascadeXhtmlBlocks().put(child.getPath().getPath().toLowerCase(), child.getId());
+                populateBlockMaps(projectInformation, child);
             else if (child.getType().equals(EntityTypeString.page))
                 projectInformation.getExistingCascadePages().put(child.getPath().getPath().toLowerCase(), child.getId());
             else if (child.getType().equals(EntityTypeString.folder))
                 populateExistingCascadeAssetsOfFolder(child, projectInformation);
         }
+    }
 
+    private static void populateBlockMaps(ProjectInformation projectInformation, Identifier blockIdentifier) throws Exception
+    {
+        projectInformation.getExistingCascadeXhtmlBlocks().put(blockIdentifier.getPath().getPath().toLowerCase(), blockIdentifier.getId());
+
+        XhtmlDataDefinitionBlock block = WebServices.readXhtmlBlock(blockIdentifier.getId(), projectInformation);
+        for (DynamicMetadataField dynamicField : block.getMetadata().getDynamicFields())
+        {
+            if (!"id".equals(dynamicField.getName()))
+                continue;
+
+            FieldValue[] fieldValues = dynamicField.getFieldValues();
+            if (fieldValues == null || fieldValues.length == 0)
+                continue;
+
+            String id = fieldValues[0].getValue();
+            if (id == null || id.equals(""))
+                continue;
+
+            projectInformation.getBlockIdToPathMap().put(id, block.getPath());
+            if (projectInformation.getBlockIdToPathMap().size() % 100 == 0)
+                Log.add(projectInformation.getBlockIdToPathMap().size() + " blocks found...</br>", projectInformation.getMigrationStatus());
+
+            return;
+        }
     }
 
     /**

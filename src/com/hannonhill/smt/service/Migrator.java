@@ -245,7 +245,7 @@ public class Migrator
         try
         {
             // Store existing file paths first to speed up creation of files
-            Log.add("Reading Cascade folder structure...<br/>", migrationStatus);
+            Log.add("Reading Cascade folder structure and blocks. This might take a while...<br/>", migrationStatus);
             WebServices.populateExistingCascadeAssets(projectInformation);
 
             // Create files that do not exist in Cascade

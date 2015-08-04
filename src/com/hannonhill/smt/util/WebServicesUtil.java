@@ -137,16 +137,9 @@ public class WebServicesUtil
                 assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
             }
 
-        Map<String, String> nameToPathMap = new HashMap<String, String>();
-        for (String path : projectInformation.getExistingCascadeXhtmlBlocks().keySet())
-        {
-            String name = PathUtil.getNameFromPath(path);
-            nameToPathMap.put(name, path);
-        }
-
-        populateBlockChoosers("header", "//div[@id=\"header-image\"]", fileContents, nameToPathMap, rootGroup, projectInformation);
-        populateBlockChoosers("article", "//div[@id=\"article\"]", fileContents, nameToPathMap, rootGroup, projectInformation);
-        populateBlockChoosers("aside", "//div[@class=\"aside\"]", fileContents, nameToPathMap, rootGroup, projectInformation);
+        populateBlockChoosers("header", "//div[@id=\"header-image\"]", fileContents, rootGroup, projectInformation);
+        populateBlockChoosers("article", "//div[@id=\"article\"]", fileContents, rootGroup, projectInformation);
+        populateBlockChoosers("aside", "//div[@class=\"aside\"]", fileContents, rootGroup, projectInformation);
 
         return convertToStructuredData(rootGroup);
     }
@@ -159,21 +152,21 @@ public class WebServicesUtil
      * @param identifier
      * @param xPathExpression
      * @param fileContents
-     * @param nameToPathMap
+     * @param idToPathMap
      * @param rootGroup
      * @param projectInformation
      * @throws Exception
      */
-    private static void populateBlockChoosers(String identifier, String xPathExpression, String fileContents, Map<String, String> nameToPathMap,
-            StructuredDataGroup rootGroup, ProjectInformation projectInformation) throws Exception
+    private static void populateBlockChoosers(String identifier, String xPathExpression, String fileContents, StructuredDataGroup rootGroup,
+            ProjectInformation projectInformation) throws Exception
     {
         DataDefinitionField field = new DataDefinitionField(identifier, identifier, ChooserType.BLOCK, true, false);
 
         String xPathToUse = xPathExpression + "//ControlWidget[ControlType='Image']/ContentID/text() | " + xPathExpression
                 + "//ControlWidget[ControlType='ContentBlock']/ContentID/text()";
-        List<String> blockNames = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
-        for (String blockName : blockNames)
-            assignAppropriateFieldValue(rootGroup, field, nameToPathMap.get(blockName), projectInformation);
+        List<String> blockIds = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
+        for (String blockId : blockIds)
+            assignAppropriateFieldValue(rootGroup, field, projectInformation.getBlockIdToPathMap().get(blockId), projectInformation);
 
         xPathToUse = xPathExpression + "//ControlWidget[ControlType='XmlDataTransform']/Template/text()";
         List<String> xsltPaths = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
