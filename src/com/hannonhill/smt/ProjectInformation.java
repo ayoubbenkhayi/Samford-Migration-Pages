@@ -59,6 +59,9 @@ public class ProjectInformation
                                                                  // checked first
     private final Map<String, String> blockIdToPathMap; // Maps from block's dynamic metadata field "id" to
                                                         // the block's path
+    private final Set<String> specialBlockIds; // Ids of blocks whose content should be copied to pages rather
+                                               // than blocks themselve being assigned to the pages' block
+                                               // choosers
 
     // to avoid having to check if file exists each time a new
     // file is brought in
@@ -97,6 +100,7 @@ public class ProjectInformation
         existingCascadePages = new HashMap<String, String>();
         pageExtensions = new HashSet<String>();
         blockExtensions = new HashSet<String>();
+        specialBlockIds = new HashSet<String>();
 
         setDefaultExtensions();
     }
@@ -459,6 +463,14 @@ public class ProjectInformation
     public Map<String, String> getBlockIdToPathMap()
     {
         return blockIdToPathMap;
+    }
+
+    /**
+     * @return Returns the specialBlockIds.
+     */
+    public Set<String> getSpecialBlockIds()
+    {
+        return specialBlockIds;
     }
 
     /**

@@ -9,6 +9,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -39,6 +40,7 @@ import com.hannonhill.www.ws.ns.AssetOperationService.StructuredData;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataAssetType;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataType;
+import com.hannonhill.www.ws.ns.AssetOperationService.XhtmlDataDefinitionBlock;
 
 /**
  * Utility class with helper methods related to web services
@@ -48,6 +50,11 @@ import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataType;
  */
 public class WebServicesUtil
 {
+    public static final String HEADER_XPATH = "//div[@id=\"header-image\"]";
+    public static final String ARTICLE_XPATH = "//div[@id=\"article\"]";
+    public static final String ASIDE_XPATH = "//div[@class=\"aside\"]";
+    public static final String SPECIAL_DATA_DEFINITION_PATH = "/Post";
+
     /**
      * Creates a Page object based on the information provided in the projectInformation and the actual file
      * from which the Page needs to be created.
@@ -99,6 +106,8 @@ public class WebServicesUtil
             page.setXhtml(xhtml == null ? "" : xhtml);
         }
 
+        assingSpecialBlockContent(pageFileContents, page, projectInformation);
+
         return page;
     }
 
@@ -143,11 +152,51 @@ public class WebServicesUtil
                 assignAppropriateFieldValue(rootGroup, (DataDefinitionField) field, fieldValue, projectInformation);
             }
 
-        populateBlockChoosers("header", "//div[@id=\"header-image\"]", fileContents, rootGroup, projectInformation);
-        populateBlockChoosers("article", "//div[@id=\"article\"]", fileContents, rootGroup, projectInformation);
-        populateBlockChoosers("aside", "//div[@class=\"aside\"]", fileContents, rootGroup, projectInformation);
+        populateBlockChoosers("header", HEADER_XPATH, fileContents, rootGroup, projectInformation);
+        populateBlockChoosers("article", ARTICLE_XPATH, fileContents, rootGroup, projectInformation);
+        populateBlockChoosers("aside", ASIDE_XPATH, fileContents, rootGroup, projectInformation);
 
         return convertToStructuredData(rootGroup);
+    }
+
+    /**
+     * Uses an XPath to find a special block id. Reads the block and assign its contents (structured data and
+     * metadata) to the page. If XPath returns more than one id, uses the first one.
+     * 
+     * @param fileContents
+     * @param page
+     * @param projectInformation
+     * @throws Exception
+     */
+    private static void assingSpecialBlockContent(String fileContents, Page page, ProjectInformation projectInformation) throws Exception
+    {
+        String xPathToUse = ARTICLE_XPATH + "//ControlWidget[ControlType='Image']/ContentID/text() | " + ARTICLE_XPATH
+                + "//ControlWidget[ControlType='ContentBlock']/ContentID/text()";
+        List<String> blockIds = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
+        if (blockIds.size() == 0)
+            return;
+        String specialBlockIdField = blockIds.get(0);
+        if (specialBlockIdField == null)
+            return;
+
+        String specialBlockPath = projectInformation.getBlockIdToPathMap().get(specialBlockIdField);
+        if (specialBlockPath == null)
+            return;
+
+        String specialBlockId = projectInformation.getExistingCascadeXhtmlBlocks().get(specialBlockPath);
+        if (specialBlockId == null)
+            return;
+
+        XhtmlDataDefinitionBlock specialBlock = WebServices.readXhtmlBlock(specialBlockId, projectInformation);
+
+        List<StructuredDataNode> allNodes = new ArrayList<StructuredDataNode>();
+        List<StructuredDataNode> pageNodes = Arrays.asList(page.getStructuredData().getStructuredDataNodes());
+        List<StructuredDataNode> blockNodes = Arrays.asList(specialBlock.getStructuredData().getStructuredDataNodes());
+        allNodes.addAll(pageNodes);
+        allNodes.addAll(blockNodes);
+        page.getStructuredData().setStructuredDataNodes(allNodes.toArray(new StructuredDataNode[0]));
+
+        page.setMetadata(specialBlock.getMetadata());
     }
 
     /**
@@ -172,7 +221,12 @@ public class WebServicesUtil
                 + "//ControlWidget[ControlType='ContentBlock']/ContentID/text()";
         List<String> blockIds = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
         for (String blockId : blockIds)
+        {
+            if (identifier.equals("article") && projectInformation.getSpecialBlockIds().contains(blockId))
+                continue;
+
             assignAppropriateFieldValue(rootGroup, field, projectInformation.getBlockIdToPathMap().get(blockId), projectInformation);
+        }
 
         xPathToUse = xPathExpression + "//ControlWidget[ControlType='XmlDataTransform']/Template/text()";
         List<String> xsltPaths = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);

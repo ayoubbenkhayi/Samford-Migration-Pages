@@ -692,6 +692,10 @@ public class WebServices
             if (id == null || id.equals(""))
                 continue;
 
+            if (block.getStructuredData() != null
+                    && WebServicesUtil.SPECIAL_DATA_DEFINITION_PATH.equals(block.getStructuredData().getDefinitionPath()))
+                projectInformation.getSpecialBlockIds().add(id);
+
             projectInformation.getBlockIdToPathMap().put(id, block.getPath());
             if (projectInformation.getBlockIdToPathMap().size() % 100 == 0)
                 Log.add(projectInformation.getBlockIdToPathMap().size() + " blocks found...</br>", projectInformation.getMigrationStatus());
