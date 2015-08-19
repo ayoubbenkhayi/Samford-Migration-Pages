@@ -54,7 +54,6 @@ public class WebServicesUtil
     public static final String HEADER_XPATH = "//div[@id=\"header-image\"]";
     public static final String ARTICLE_XPATH = "//div[@id=\"article\"]";
     public static final String ASIDE_XPATH = "//div[@class=\"aside\"]";
-    public static final String SPECIAL_DATA_DEFINITION_PATH = "Post";
 
     /**
      * Creates a Page object based on the information provided in the projectInformation and the actual file

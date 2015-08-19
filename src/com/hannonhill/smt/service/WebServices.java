@@ -695,8 +695,7 @@ public class WebServices
 
             // If block is using specific data definition and there is a corresponding content type to the
             // data definition/metadata set pair, consider this block a special block
-            if (block.getStructuredData() != null
-                    && WebServicesUtil.SPECIAL_DATA_DEFINITION_PATH.equals(block.getStructuredData().getDefinitionPath()))
+            if (block.getStructuredData() != null)
             {
                 Pair<String, String> ddMdPair = new Pair<String, String>(block.getStructuredData().getDefinitionId(), block.getMetadataSetId());
                 String contentTypeId = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
