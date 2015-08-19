@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +27,7 @@ import com.hannonhill.smt.service.WebServices;
 import com.hannonhill.smt.util.PathUtil;
 import com.hannonhill.www.ws.ns.AssetOperationService.ContentType;
 import com.hannonhill.www.ws.ns.AssetOperationService.Site;
+import com.sun.tools.javac.util.Pair;
 
 /**
  * Action that displays and processes form with cascade url, username, password and site name
@@ -177,8 +177,10 @@ public class ProjectPropertiesAction extends BaseAction
             return;
         }
 
-        // Clear the map in the projectInformation in case if it had some old data
-        projectInformation.setContentTypes(new HashMap<String, ContentTypeInformation>());
+        // Clear the maps in the projectInformation in case if it had some old data
+        projectInformation.getContentTypes().clear();
+        projectInformation.getDataDefMetadataSetToContentTypeMapping().clear();
+
         // Convert each ContentType to the ContentTypeInformation object and add to the map in the
         // projectInformation
         for (ContentType contentType : contentTypes)
@@ -195,7 +197,11 @@ public class ProjectPropertiesAction extends BaseAction
                 // Only data definitions with "aside", "article" and "header" multiple block chooser fields
                 if (isMultipleBlockChooser(ddFields, "aside") && isMultipleBlockChooser(ddFields, "article")
                         && isMultipleBlockChooser(ddFields, "header"))
+                {
                     projectInformation.getContentTypes().put(contentType.getPath(), ctInfo);
+                    projectInformation.getDataDefMetadataSetToContentTypeMapping().put(
+                            new Pair<String, String>(contentType.getDataDefinitionId(), contentType.getMetadataSetId()), contentType.getId());
+                }
             }
             catch (Exception e)
             {

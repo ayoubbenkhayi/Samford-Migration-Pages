@@ -41,6 +41,7 @@ import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataAssetType;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataNode;
 import com.hannonhill.www.ws.ns.AssetOperationService.StructuredDataType;
 import com.hannonhill.www.ws.ns.AssetOperationService.XhtmlDataDefinitionBlock;
+import com.sun.tools.javac.util.Pair;
 
 /**
  * Utility class with helper methods related to web services
@@ -53,7 +54,7 @@ public class WebServicesUtil
     public static final String HEADER_XPATH = "//div[@id=\"header-image\"]";
     public static final String ARTICLE_XPATH = "//div[@id=\"article\"]";
     public static final String ASIDE_XPATH = "//div[@class=\"aside\"]";
-    public static final String SPECIAL_DATA_DEFINITION_PATH = "/Post";
+    public static final String SPECIAL_DATA_DEFINITION_PATH = "Post";
 
     /**
      * Creates a Page object based on the information provided in the projectInformation and the actual file
@@ -175,10 +176,16 @@ public class WebServicesUtil
         List<String> blockIds = XmlUtil.evaluateXPathExpressionAsList(fileContents, xPathToUse);
         if (blockIds.size() == 0)
             return;
+
+        // Get first block found and verify that this is a special block
         String specialBlockIdField = blockIds.get(0);
         if (specialBlockIdField == null)
             return;
 
+        if (!projectInformation.getSpecialBlockIds().contains(specialBlockIdField))
+            return;
+
+        // Read the block
         String specialBlockPath = projectInformation.getBlockIdToPathMap().get(specialBlockIdField);
         if (specialBlockPath == null)
             return;
@@ -189,14 +196,24 @@ public class WebServicesUtil
 
         XhtmlDataDefinitionBlock specialBlock = WebServices.readXhtmlBlock(specialBlockId, projectInformation);
 
+        // Get the block's content type
+        Pair<String, String> ddMdPair = new Pair<String, String>(specialBlock.getStructuredData().getDefinitionId(), specialBlock.getMetadataSetId());
+        String contentTypeId = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
+
+        // If matching content type could not be found, this is not a special block (should have been caught
+        // earlier)
+        if (contentTypeId == null)
+            return;
+
+        // Assign data definition fields, metadata fields and content type of the block to the page
         List<StructuredDataNode> allNodes = new ArrayList<StructuredDataNode>();
         List<StructuredDataNode> pageNodes = Arrays.asList(page.getStructuredData().getStructuredDataNodes());
         List<StructuredDataNode> blockNodes = Arrays.asList(specialBlock.getStructuredData().getStructuredDataNodes());
         allNodes.addAll(pageNodes);
         allNodes.addAll(blockNodes);
         page.getStructuredData().setStructuredDataNodes(allNodes.toArray(new StructuredDataNode[0]));
-
         page.setMetadata(specialBlock.getMetadata());
+        page.setContentTypeId(contentTypeId);
     }
 
     /**

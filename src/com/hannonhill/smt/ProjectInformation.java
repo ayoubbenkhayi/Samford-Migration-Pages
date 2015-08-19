@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.sun.tools.javac.util.Pair;
+
 /**
  * This object holds all the current project information
  * 
@@ -44,10 +46,14 @@ public class ProjectInformation
                                                                                         // value it should get
     private final Map<String, String> templateToBlockMapping = new HashMap<String, String>();
 
-    // analyzed information
-    private Map<String, ContentTypeInformation> contentTypes; // content type path and the actual content type
-                                                              // information (with the available metadata and
-                                                              // dd fields)
+    // Analyzed information
+
+    // Aontent type path and the actual content type information (with the available metadata and dd fields)
+    private final Map<String, ContentTypeInformation> contentTypes;
+
+    // Maps a pair that contains data definition id and metadata set id to a content type id
+    private final Map<Pair<String, String>, String> dataDefMetadataSetToContentTypeMapping;
+
     private final Set<File> filesToProcess; // All the files that need to be processed during migration -
                                             // it is a set to avoid duplicates and because order doesn't
                                             // really matter
@@ -59,9 +65,9 @@ public class ProjectInformation
                                                                  // checked first
     private final Map<String, String> blockIdToPathMap; // Maps from block's dynamic metadata field "id" to
                                                         // the block's path
-    private final Set<String> specialBlockIds; // Ids of blocks whose content should be copied to pages rather
-                                               // than blocks themselve being assigned to the pages' block
-                                               // choosers
+    private final Set<String> specialBlockIds; // Dynamic metadata ids of blocks whose content should be
+                                               // copied to pages rather than blocks themselve being assigned
+                                               // to the pages' block choosers
 
     // to avoid having to check if file exists each time a new
     // file is brought in
@@ -93,6 +99,7 @@ public class ProjectInformation
         currentTask = null;
         filesToProcess = new HashSet<File>();
         contentTypes = new HashMap<String, ContentTypeInformation>();
+        dataDefMetadataSetToContentTypeMapping = new HashMap<Pair<String, String>, String>();
         externalRootLevelFolderAssignemnts = new HashMap<String, ExternalRootLevelFolderAssignment>();
         existingCascadeFiles = new HashMap<String, String>();
         existingCascadeXhtmlBlocks = new HashMap<String, String>();
@@ -236,11 +243,11 @@ public class ProjectInformation
     }
 
     /**
-     * @param contentTypes the contentTypes to set
+     * @return Returns the dataDefMetadataSetToContentTypeMapping.
      */
-    public void setContentTypes(Map<String, ContentTypeInformation> contentTypes)
+    public Map<Pair<String, String>, String> getDataDefMetadataSetToContentTypeMapping()
     {
-        this.contentTypes = contentTypes;
+        return dataDefMetadataSetToContentTypeMapping;
     }
 
     /**

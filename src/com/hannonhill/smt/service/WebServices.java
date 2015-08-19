@@ -45,6 +45,7 @@ import com.hannonhill.www.ws.ns.AssetOperationService.Path;
 import com.hannonhill.www.ws.ns.AssetOperationService.ReadResult;
 import com.hannonhill.www.ws.ns.AssetOperationService.Site;
 import com.hannonhill.www.ws.ns.AssetOperationService.XhtmlDataDefinitionBlock;
+import com.sun.tools.javac.util.Pair;
 
 /**
  * This class contains service methods for web services
@@ -692,9 +693,16 @@ public class WebServices
             if (id == null || id.equals(""))
                 continue;
 
+            // If block is using specific data definition and there is a corresponding content type to the
+            // data definition/metadata set pair, consider this block a special block
             if (block.getStructuredData() != null
                     && WebServicesUtil.SPECIAL_DATA_DEFINITION_PATH.equals(block.getStructuredData().getDefinitionPath()))
-                projectInformation.getSpecialBlockIds().add(id);
+            {
+                Pair<String, String> ddMdPair = new Pair<String, String>(block.getStructuredData().getDefinitionId(), block.getMetadataSetId());
+                String contentTypeId = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
+                if (contentTypeId != null)
+                    projectInformation.getSpecialBlockIds().add(id);
+            }
 
             projectInformation.getBlockIdToPathMap().put(id, block.getPath());
             if (projectInformation.getBlockIdToPathMap().size() % 100 == 0)
