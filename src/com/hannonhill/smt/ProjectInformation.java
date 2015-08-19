@@ -48,10 +48,10 @@ public class ProjectInformation
 
     // Analyzed information
 
-    // Aontent type path and the actual content type information (with the available metadata and dd fields)
+    // Content type path and the actual content type information (with the available metadata and dd fields)
     private final Map<String, ContentTypeInformation> contentTypes;
 
-    // Maps a pair that contains data definition id and metadata set id to a content type id
+    // Maps a pair that contains data definition id and metadata set id to a content type path
     private final Map<Pair<String, String>, String> dataDefMetadataSetToContentTypeMapping;
 
     private final Set<File> filesToProcess; // All the files that need to be processed during migration -

@@ -197,11 +197,11 @@ public class WebServicesUtil
 
         // Get the block's content type
         Pair<String, String> ddMdPair = new Pair<String, String>(specialBlock.getStructuredData().getDefinitionId(), specialBlock.getMetadataSetId());
-        String contentTypeId = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
+        String contentTypePath = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
 
         // If matching content type could not be found, this is not a special block (should have been caught
         // earlier)
-        if (contentTypeId == null)
+        if (contentTypePath == null)
             return;
 
         // Assign data definition fields, metadata fields and content type of the block to the page
@@ -212,7 +212,7 @@ public class WebServicesUtil
         allNodes.addAll(blockNodes);
         page.getStructuredData().setStructuredDataNodes(allNodes.toArray(new StructuredDataNode[0]));
         page.setMetadata(specialBlock.getMetadata());
-        page.setContentTypeId(contentTypeId);
+        page.setContentTypePath(contentTypePath);
     }
 
     /**
@@ -552,5 +552,22 @@ public class WebServicesUtil
         {
             return contentFields;
         }
+    }
+
+    /**
+     * Returns true if given <code>ddFields</code> have a field with given <code>fieldIdentifier</code> and
+     * that field is a multiple block chooser.
+     * 
+     * @param ddFields
+     * @param fieldIdentifier
+     * @return
+     */
+    public static boolean isMultipleBlockChooser(Map<String, DataDefinitionField> ddFields, String fieldIdentifier)
+    {
+        DataDefinitionField ddField = ddFields.get(fieldIdentifier);
+        if (ddField == null)
+            return false;
+
+        return ddField.isMultiple() && ddField.getChooserType() == ChooserType.BLOCK;
     }
 }

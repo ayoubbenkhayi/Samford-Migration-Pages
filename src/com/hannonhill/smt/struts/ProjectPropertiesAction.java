@@ -19,12 +19,12 @@ import org.apache.commons.lang.xwork.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.hannonhill.smt.ChooserType;
 import com.hannonhill.smt.ContentTypeInformation;
 import com.hannonhill.smt.DataDefinitionField;
 import com.hannonhill.smt.ProjectInformation;
 import com.hannonhill.smt.service.WebServices;
 import com.hannonhill.smt.util.PathUtil;
+import com.hannonhill.smt.util.WebServicesUtil;
 import com.hannonhill.www.ws.ns.AssetOperationService.ContentType;
 import com.hannonhill.www.ws.ns.AssetOperationService.Site;
 import com.sun.tools.javac.util.Pair;
@@ -195,12 +195,12 @@ public class ProjectPropertiesAction extends BaseAction
                 Map<String, DataDefinitionField> ddFields = ctInfo.getDataDefinitionFields();
 
                 // Only data definitions with "aside", "article" and "header" multiple block chooser fields
-                if (isMultipleBlockChooser(ddFields, "aside") && isMultipleBlockChooser(ddFields, "article")
-                        && isMultipleBlockChooser(ddFields, "header"))
+                if (WebServicesUtil.isMultipleBlockChooser(ddFields, "aside") && WebServicesUtil.isMultipleBlockChooser(ddFields, "article")
+                        && WebServicesUtil.isMultipleBlockChooser(ddFields, "header"))
                 {
                     projectInformation.getContentTypes().put(contentType.getPath(), ctInfo);
                     projectInformation.getDataDefMetadataSetToContentTypeMapping().put(
-                            new Pair<String, String>(contentType.getDataDefinitionId(), contentType.getMetadataSetId()), contentType.getId());
+                            new Pair<String, String>(contentType.getDataDefinitionId(), contentType.getMetadataSetId()), contentType.getPath());
                 }
             }
             catch (Exception e)
@@ -208,23 +208,6 @@ public class ProjectPropertiesAction extends BaseAction
                 addActionError(e.getMessage());
             }
         }
-    }
-
-    /**
-     * Returns true if given <code>ddFields</code> have a field with given <code>fieldIdentifier</code> and
-     * that field is a multiple block chooser.
-     * 
-     * @param ddFields
-     * @param fieldIdentifier
-     * @return
-     */
-    private boolean isMultipleBlockChooser(Map<String, DataDefinitionField> ddFields, String fieldIdentifier)
-    {
-        DataDefinitionField ddField = ddFields.get(fieldIdentifier);
-        if (ddField == null)
-            return false;
-
-        return ddField.isMultiple() && ddField.getChooserType() == ChooserType.BLOCK;
     }
 
     /**

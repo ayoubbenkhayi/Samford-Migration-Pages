@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hannonhill.smt.CascadeAssetInformation;
+import com.hannonhill.smt.ContentTypeInformation;
 import com.hannonhill.smt.DataDefinitionField;
 import com.hannonhill.smt.Field;
 import com.hannonhill.smt.MetadataSetField;
@@ -693,14 +694,27 @@ public class WebServices
             if (id == null || id.equals(""))
                 continue;
 
-            // If block is using specific data definition and there is a corresponding content type to the
-            // data definition/metadata set pair, consider this block a special block
+            // If block is using a data definition and matadata set whose pair can be matched with a content
+            // type and that content type has necessary "aside", "article" and "header" fields, , consider
+            // this block a special block
             if (block.getStructuredData() != null)
             {
                 Pair<String, String> ddMdPair = new Pair<String, String>(block.getStructuredData().getDefinitionId(), block.getMetadataSetId());
-                String contentTypeId = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
-                if (contentTypeId != null)
-                    projectInformation.getSpecialBlockIds().add(id);
+                String contentTypePath = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
+                if (contentTypePath != null)
+                {
+                    ContentTypeInformation ctInfo = projectInformation.getContentTypes().get(contentTypePath);
+                    Map<String, DataDefinitionField> ddFields = ctInfo.getDataDefinitionFields();
+
+                    // Only data definitions with "aside", "article" and "header" multiple block chooser
+                    // fields
+                    if (WebServicesUtil.isMultipleBlockChooser(ddFields, "aside") && WebServicesUtil.isMultipleBlockChooser(ddFields, "article")
+                            && WebServicesUtil.isMultipleBlockChooser(ddFields, "header"))
+                    {
+                        projectInformation.getSpecialBlockIds().add(id);
+                    }
+
+                }
             }
 
             projectInformation.getBlockIdToPathMap().put(id, block.getPath());
