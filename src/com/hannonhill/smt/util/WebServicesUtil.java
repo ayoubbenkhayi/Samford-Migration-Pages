@@ -176,31 +176,45 @@ public class WebServicesUtil
         if (blockIds.size() == 0)
             return;
 
-        // Get first block found and verify that this is a special block
-        String specialBlockIdField = blockIds.get(0);
-        if (specialBlockIdField == null)
-            return;
+        // Iterate over found blocks found and verify that this is a special block
+        XhtmlDataDefinitionBlock specialBlock = null;
+        String contentTypePath = null;
+        for (String specialBlockIdField : blockIds)
+        {
+            // If the id field is null for any reason, let's move on to the next id
+            if (specialBlockIdField == null)
+                continue;
 
-        if (!projectInformation.getSpecialBlockIds().contains(specialBlockIdField))
-            return;
+            // If this id is not an id of a special block, move on
+            if (!projectInformation.getSpecialBlockIds().contains(specialBlockIdField))
+                continue;
 
-        // Read the block
-        String specialBlockPath = projectInformation.getBlockIdToPathMap().get(specialBlockIdField);
-        if (specialBlockPath == null)
-            return;
+            // Read the block. If block or its path is not found, move on.
+            String specialBlockPath = projectInformation.getBlockIdToPathMap().get(specialBlockIdField);
+            if (specialBlockPath == null)
+                continue;
 
-        String specialBlockId = projectInformation.getExistingCascadeXhtmlBlocks().get(specialBlockPath);
-        if (specialBlockId == null)
-            return;
+            String specialBlockId = projectInformation.getExistingCascadeXhtmlBlocks().get(specialBlockPath.toLowerCase());
+            if (specialBlockId == null)
+                continue;
 
-        XhtmlDataDefinitionBlock specialBlock = WebServices.readXhtmlBlock(specialBlockId, projectInformation);
+            specialBlock = WebServices.readXhtmlBlock(specialBlockId, projectInformation);
+            if (specialBlock == null)
+                continue;
 
-        // Get the block's content type
-        Pair<String, String> ddMdPair = new Pair<String, String>(specialBlock.getStructuredData().getDefinitionId(), specialBlock.getMetadataSetId());
-        String contentTypePath = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
+            // Get the block's content type. If content type is not found, move on.
+            Pair<String, String> ddMdPair = new Pair<String, String>(specialBlock.getStructuredData().getDefinitionId(),
+                    specialBlock.getMetadataSetId());
+            contentTypePath = projectInformation.getDataDefMetadataSetToContentTypeMapping().get(ddMdPair);
 
-        // If matching content type could not be found, this is not a special block (should have been caught
-        // earlier)
+            // If matching content type could not be found, this is not a special block (should have been
+            // caught earlier)
+            if (contentTypePath == null)
+                continue;
+
+            // At this point we have found the block and content type path, so we can use this block
+            break;
+        }
         if (contentTypePath == null)
             return;
 
